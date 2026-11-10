@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "yuvo-demo",
+  "compatibility_date": "2026-07-16",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist-demo",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    {
+      "pattern": "yuvo.luojie.dev",
+      "custom_domain": true
+    }
+  ]
+}

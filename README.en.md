@@ -4,7 +4,7 @@
 
 **记下日常，心中有余。**
 
-[中文](README.md) · [English](README.en.md) · [Live demo](https://luojiedev.github.io/yuvo/) · [Data and privacy](docs/privacy.en.md)
+[中文](README.md) · [English](README.en.md) · [Live demo](https://yuvo.luojie.dev/) · [Data and privacy](docs/privacy.en.md)
 
 [![CI and demo](https://github.com/luojiedev/yuvo/actions/workflows/ci.yml/badge.svg)](https://github.com/luojiedev/yuvo/actions/workflows/ci.yml)
 
@@ -14,9 +14,9 @@ This repository contains independently deployable source code. It does not conta
 
 ## Try it
 
-Open the **[Yuvo live demo](https://luojiedev.github.io/yuvo/)** to try local bookkeeping, transaction search, statistics, budgets, subscriptions, and import/export without registering an account.
+Open the **[Yuvo live demo](https://yuvo.luojie.dev/)** to try local bookkeeping, transaction search, statistics, budgets, subscriptions, and import/export without registering an account.
 
-The demo runs on GitHub Pages with a dedicated browser database. Ledger contents and images are not uploaded. Accounts, family sharing, cloud synchronization, automatic exchange rates, push notifications, and offline PWA installation require the full self-hosted version. The application interface is currently in Chinese.
+The demo runs on a dedicated Cloudflare Worker with a separate browser database. Ledger contents and images are not uploaded. Accounts, family sharing, cloud synchronization, automatic exchange rates, push notifications, and offline PWA installation require the full self-hosted version. The application interface is currently in Chinese.
 
 Demo data has no cloud backup. Export JSON before clearing browser storage or changing devices. See [data and privacy](docs/privacy.en.md) for details.
 
@@ -154,13 +154,27 @@ pnpm run cf:types:check
 
 The [GitHub Actions workflow](.github/workflows/ci.yml) runs for pushes to `main`, pull requests, and manual dispatches. It uses Node.js 22 and the pinned pnpm version, installs with `--frozen-lockfile`, and runs all checks listed above.
 
-It also builds the local-only demo with `pnpm run demo:build --base /yuvo/`. After all checks pass on `main`, the workflow publishes GitHub Pages and displays the live URL in the deployment job. Pull requests run checks and build the demo without replacing the public site.
+It also builds the local-only demo with `pnpm run demo:build`, using root-relative asset paths. Once Cloudflare deployment credentials are configured, successful checks on `main` publish the demo. Pull requests run checks and build the demo without replacing the public site.
 
-For your own repository, select **Settings → Pages → Build and deployment → Source → GitHub Actions**, then push to `main` or run the workflow manually. Asset paths follow the repository name. A fork's default demo URL is `https://<owner>.github.io/<repo>/`; update the fixed README links for your fork.
+The separate [wrangler.demo.jsonc](wrangler.demo.jsonc) configures the `yuvo-demo` Worker and `yuvo.luojie.dev` custom domain. It does not bind the full application's D1, R2, Images, or VAPID secrets.
 
-Project sites inherit a user site's custom domain when configured. In that case, use the URL reported by Pages. See [GitHub's custom-domain documentation](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages).
+For the first manual deployment:
 
-Demo output is written to `dist-demo/`. The build does not load the private deployment configuration or root `.env*` files, and requires no Cloudflare token, D1/R2 resources, or additional deployment secrets.
+```bash
+pnpm exec wrangler login
+pnpm run demo:deploy
+```
+
+The domain's zone must be active in the same Cloudflare account. Wrangler binds the domain through `routes[].custom_domain`. For your own fork, change the Worker name, domain, and README links. Confirm the purpose of any existing website before replacing its domain records.
+
+For GitHub publishing, configure **Settings → Secrets and variables → Actions**:
+
+- Repository secret `CLOUDFLARE_API_TOKEN`: use Cloudflare's **Edit Cloudflare Workers** template, restricting the account and zone scopes to the resources needed for deployment.
+- Repository variable `CLOUDFLARE_ACCOUNT_ID`: the deployment account's Account ID.
+
+Without the Account ID variable, CI runs checks and builds the demo but skips publishing. Once both values are configured, push to `main` or dispatch the workflow to publish. The `cloudflare-demo` deployment environment displays the live URL.
+
+Demo output is written to `dist-demo/`. The build does not load the private deployment configuration or root `.env*` files. It requires no D1/R2 resources or VAPID secrets; use the instructions below for the full backend deployment.
 
 ## Deploy the full application to Cloudflare
 
@@ -223,7 +237,8 @@ Launch messages are stored in D1's `app_messages` table. Customize active record
 - `public/`: Service Worker, manifest, icons, and startup images.
 - `tests/` and `worker-tests/`: client/domain tests and backend integration tests.
 - `demo/` and `vite.demo.config.ts`: standalone local-only demo entry and build.
-- `.github/workflows/ci.yml`: automated checks and GitHub Pages publishing.
+- `.github/workflows/ci.yml`: automated checks and Cloudflare demo publishing.
+- `wrangler.demo.jsonc`: dedicated demo Worker and custom-domain configuration.
 - `docs/privacy.md` and `docs/privacy.en.md`: Chinese and English data/privacy documentation.
 - `AGENTS.md`: repository implementation checkpoints for Agents.
 - `DEVELOPMENT_PLAN.md` and `IMPLEMENTATION_PLAN.md`: current roadmap and detailed implementation history, currently in Chinese.

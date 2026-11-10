@@ -4,7 +4,7 @@
 
 **记下日常，心中有余。**
 
-[中文](README.md) · [English](README.en.md) · [在线体验](https://luojiedev.github.io/yuvo/) · [数据与隐私](docs/privacy.md)
+[中文](README.md) · [English](README.en.md) · [在线体验](https://yuvo.luojie.dev/) · [数据与隐私](docs/privacy.md)
 
 [![CI and demo](https://github.com/luojiedev/yuvo/actions/workflows/ci.yml/badge.svg)](https://github.com/luojiedev/yuvo/actions/workflows/ci.yml)
 
@@ -14,9 +14,9 @@
 
 ## 在线体验
 
-打开 **[知余 Yuvo 在线体验](https://luojiedev.github.io/yuvo/)** 即可使用本机记账、流水查询、统计、预算、订阅以及导入导出，无需注册。
+打开 **[知余 Yuvo 在线体验](https://yuvo.luojie.dev/)** 即可使用本机记账、流水查询、统计、预算、订阅以及导入导出，无需注册。
 
-体验站由 GitHub Pages 托管，使用独立的浏览器数据库，账本和图片不会上传。它不提供账号、家庭共享、云同步、自动汇率、系统通知或 PWA 离线安装；这些能力需要按下文部署完整版本。体验页面仍为中文。
+体验站由独立的 Cloudflare Worker 托管，使用独立的浏览器数据库，账本和图片不会上传。它不提供账号、家庭共享、云同步、自动汇率、系统通知或 PWA 离线安装；这些能力需要按下文部署完整版本。体验页面仍为中文。
 
 体验数据没有云端备份，清理浏览器数据或更换设备前请先导出 JSON。详细边界见[数据与隐私说明](docs/privacy.md)。
 
@@ -182,14 +182,28 @@ pnpm run cf:types:check
 
 1. 使用 Node.js 22 和 `package.json` 中固定的 pnpm 版本，通过 `--frozen-lockfile` 安装依赖。
 2. 执行 Worker 类型检查、TypeScript、Lint、生产构建、前端测试、本地数据库测试和 Worker/D1/R2 集成测试。
-3. 使用 `pnpm run demo:build --base /yuvo/` 构建独立的纯前端体验站。
-4. 仅在 `main` 的全部检查通过后发布 GitHub Pages；成功的部署任务中会显示可打开的体验地址。PR 运行检查和体验构建，不覆盖公开体验站。
+3. 使用 `pnpm run demo:build` 构建独立的纯前端体验站，资源路径位于域名根目录。
+4. 配置 Cloudflare 部署凭据后，仅在 `main` 的全部检查通过后发布体验站。PR 运行检查和体验构建，不覆盖公开体验站。
 
-首次在自己的 GitHub 仓库使用时，在 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**，然后推送到 `main` 或手动运行工作流。工作流按仓库名称设置资源路径；Fork 后的默认体验地址为 `https://<owner>.github.io/<repo>/`，README 中的固定链接需要自行更新。
+体验站使用单独的 [wrangler.demo.jsonc](wrangler.demo.jsonc)，Worker 名称为 `yuvo-demo`，自定义域名为 `yuvo.luojie.dev`，不绑定完整版本的 D1、R2、Images 或 VAPID Secret。
 
-如果账号主页配置了自定义域名，项目站会继承该域名，请以 Pages 的实际部署链接为准。参见 [GitHub Pages 域名说明](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages)。
+首次手动部署：
 
-体验构建输出到 `dist-demo/`，不会读取本地部署配置或根目录的 `.env*`，不需要 Cloudflare Token、D1/R2 资源或额外部署 Secret。完整后端部署仍按下文操作。
+```bash
+pnpm exec wrangler login
+pnpm run demo:deploy
+```
+
+自定义域名所在的 Zone 需要已接入同一个 Cloudflare 账号。Wrangler 根据 `routes[].custom_domain` 配置绑定域名；部署自己的 Fork 时，请修改 Worker 名称、域名以及 README 链接。如果域名已有站点，请先确认其用途再替换记录。
+
+GitHub 自动发布需要在 **Settings → Secrets and variables → Actions** 设置：
+
+- Repository secret：`CLOUDFLARE_API_TOKEN`。可使用 Cloudflare 的 **Edit Cloudflare Workers** 模板，并将账号和 Zone 范围限制到实际部署所需资源。
+- Repository variable：`CLOUDFLARE_ACCOUNT_ID`。填写部署账号的 Account ID。
+
+未设置 Account ID 时，CI 只运行检查与体验构建，跳过发布。配置完整后，推送到 `main` 或手动运行工作流即可更新体验站；工作流的 `cloudflare-demo` 环境会显示体验地址。
+
+体验构建输出到 `dist-demo/`，不会读取本地部署配置或根目录的 `.env*`。体验站不需要 D1/R2 资源和 VAPID Secret，完整后端部署仍按下文操作。
 
 ## Cloudflare 部署
 
@@ -259,7 +273,8 @@ pnpm run cf:deploy
 - `worker-tests/`：Worker、D1 和 R2 集成测试。
 - `AGENTS.md`：本项目的本地 Agent 实施检查点。
 - `demo/` 与 `vite.demo.config.ts`：独立的纯前端体验入口与构建配置。
-- `.github/workflows/ci.yml`：自动检查及 GitHub Pages 体验站发布。
+- `.github/workflows/ci.yml`：自动检查及 Cloudflare 体验站发布。
+- `wrangler.demo.jsonc`：独立体验 Worker 与自定义域名配置。
 - `docs/privacy.md` 与 `docs/privacy.en.md`：中英文数据与隐私说明。
 - `DEVELOPMENT_PLAN.md`：当前能力、剩余工作和里程碑。
 - `IMPLEMENTATION_PLAN.md`：更细粒度的历史实施清单。

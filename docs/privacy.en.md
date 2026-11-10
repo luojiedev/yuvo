@@ -6,12 +6,12 @@ This document describes the current repository implementation. Each self-hosted 
 
 ## Public demo
 
-The [live demo](https://luojiedev.github.io/yuvo/) is hosted on GitHub Pages and provides a local-only experience:
+The [live demo](https://yuvo.luojie.dev/) is hosted on a dedicated Cloudflare Worker and provides a local-only experience:
 
 - Ledgers, transactions, categories, accounts, budgets, subscriptions, and selected images stay in a dedicated database in the current browser. They are not uploaded to a ledger server.
 - The demo build blocks application API calls and uses a `connect-src 'none'` content security policy. Login, family sharing, cloud sync, automatic exchange rates, and push notifications are unavailable.
 - The demo does not register a Service Worker or provide offline PWA installation. Reloading requires a network connection; saved demo entries remain in browser storage.
-- Requests for the page and static assets still reach GitHub Pages. The hosting platform may process request information such as IP addresses and browser details under its own policies.
+- Requests for the page and static assets still reach Cloudflare. The hosting platform may process request information such as IP addresses and browser details under its own policies.
 - The demo uses `swift-ledger:demo-v1`. It does not open normal account databases or inspect and migrate legacy ledgers.
 - Browser storage is isolated by origin; a URL path is not a security boundary. Other applications on the same origin may share storage access.
 
