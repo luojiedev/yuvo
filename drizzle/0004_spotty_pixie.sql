@@ -1,0 +1,1 @@
+ALTER TABLE `ledgers` ADD `monthly_budget_minor` integer DEFAULT 300000 NOT NULL;

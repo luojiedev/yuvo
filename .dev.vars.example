@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local Web Push testing. Never commit real keys.
+# Leave these values empty when you do not need push notifications locally.
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:admin@example.com"
