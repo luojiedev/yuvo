@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "轻记账",
-  description: "本地优先、支持家庭共享和离线自动补偿同步的轻量记账应用。",
+  title: "知余 Yuvo",
+  description: "记下日常，心中有余。知余 Yuvo 是本地优先、支持家庭共享和离线自动同步的记账应用。",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "轻记账",
+    title: "知余",
   },
   other: {
     "color-scheme": "light dark",

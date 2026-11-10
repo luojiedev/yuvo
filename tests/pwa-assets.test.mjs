@@ -5,7 +5,7 @@ import vm from "node:vm";
 
 test("provides a standalone install manifest and required icons", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"));
-  assert.equal(manifest.name, "轻记账");
+  assert.equal(manifest.name, "知余 Yuvo");
   assert.equal(manifest.start_url, "/");
   assert.equal(manifest.scope, "/");
   assert.equal(manifest.display, "standalone");

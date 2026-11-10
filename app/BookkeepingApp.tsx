@@ -570,7 +570,7 @@ function startupFailureMessage(error: unknown): string {
     return "读取本地账本超时。账本数据仍保存在手机中，请重新尝试。";
   }
   if (error instanceof Error && error.message.includes("被其他页面阻止")) {
-    return "另一个轻记账窗口正在占用旧版账本，请关闭其他窗口后重新尝试。";
+    return "另一个知余窗口正在占用旧版账本，请关闭其他窗口后重新尝试。";
   }
   return "暂时无法打开本地账本。账本数据不会被清除，请重新尝试。";
 }
@@ -581,9 +581,9 @@ function AppLaunchBrand() {
 
 function AppLaunchScreen({ message, status }: { message: string; status: string }) {
   return (
-    <main className="app-launch-screen" aria-live="polite" aria-label="轻记账正在启动">
+    <main className="app-launch-screen" aria-live="polite" aria-label="知余正在启动">
       <AppLaunchBrand />
-      <h1>轻记账</h1>
+      <h1>知余 Yuvo</h1>
       <p className="app-launch-message">{message}</p>
       <small>{status}</small>
       <span className="app-launch-progress" aria-hidden="true"><i /><i /><i /></span>
@@ -599,7 +599,7 @@ function AppStartupRecovery({ message, onRetry }: { message: string; onRetry: ()
       <h1>没有丢失任何记录</h1>
       <p>{message}</p>
       <button type="button" onClick={onRetry}>重新尝试</button>
-      <small>如果仍然无法进入，请彻底关闭轻记账后重新打开。</small>
+      <small>如果仍然无法进入，请彻底关闭知余后重新打开。</small>
     </main>
   );
 }
@@ -2899,7 +2899,7 @@ export function BookkeepingApp() {
     setIsDataPortabilityBusy(true);
     try {
       const backup = await exportLedgerBackup(database, ledger.id);
-      downloadFile(`轻记账-${ledger.name}-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(backup), "application/json;charset=utf-8");
+      downloadFile(`知余-${ledger.name}-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(backup), "application/json;charset=utf-8");
       setDataPortabilityStatus(`已导出 ${backup.transactions.length} 笔流水、${backup.subscriptions.length} 项订阅及全部账户、分类和附件`);
       console.debug("[bookkeeping] ledger backup exported", { ledgerId: ledger.id, transactionCount: transactions.length, subscriptionCount: subscriptions.length });
     } catch (error) {
@@ -2941,7 +2941,7 @@ export function BookkeepingApp() {
   }
 
   function exportCurrentLedgerCsv() {
-    downloadFile(`轻记账-${activeLedgerName}-流水.csv`, exportTransactionsCsv(transactions), "text/csv;charset=utf-8");
+    downloadFile(`知余-${activeLedgerName}-流水.csv`, exportTransactionsCsv(transactions), "text/csv;charset=utf-8");
     setDataPortabilityStatus(`已导出 ${transactions.length} 笔流水 CSV`);
     console.debug("[bookkeeping] transaction CSV exported", { ledgerId: activeLedgerId, transactionCount: transactions.length });
   }
@@ -3398,12 +3398,12 @@ export function BookkeepingApp() {
       {isInstallGuideOpen ? (
         <div className="install-guide-backdrop" role="presentation" onClick={() => setIsInstallGuideOpen(false)}>
           <section className="install-guide-sheet" role="dialog" aria-modal="true" aria-labelledby="install-guide-title" onClick={(event) => event.stopPropagation()}>
-            <header><span aria-hidden="true">装</span><div><p>离线应用</p><h2 id="install-guide-title">添加轻记账到主屏幕</h2></div></header>
+            <header><span aria-hidden="true">装</span><div><p>离线应用</p><h2 id="install-guide-title">添加知余到主屏幕</h2></div></header>
             {pwaStatus === "development" || pwaStatus === "unsupported" ? (
               <p className="install-warning">当前局域网开发地址不是 HTTPS，iPhone 不允许在此地址安装 Service Worker。请使用发布后的 HTTPS 地址完成安装。</p>
             ) : null}
             <ol>
-              <li><b>1</b><span>在 iPhone 的 Safari 中打开轻记账 HTTPS 地址。</span></li>
+              <li><b>1</b><span>在 iPhone 的 Safari 中打开知余 HTTPS 地址。</span></li>
               <li><b>2</b><span>点击浏览器底部的“分享”按钮。</span></li>
               <li><b>3</b><span>选择“添加到主屏幕”，然后点击“添加”。</span></li>
               <li><b>4</b><span>保持联网并打开一次桌面图标，看到“离线可用”后即可断网使用。</span></li>

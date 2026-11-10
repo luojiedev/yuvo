@@ -1,6 +1,10 @@
-# 轻记账
+# 知余 Yuvo
 
-轻记账是一款面向个人和家庭共同使用的本地优先记账 PWA。应用会先把账单和待同步操作写入浏览器 IndexedDB，保证弱网或离线时仍可记账；联网后再通过 Cloudflare Workers 将增量变更幂等同步到 D1，图片附件保存到 R2。
+*Every day, a little more room.*
+
+**记下日常，心中有余。**
+
+知余 Yuvo 是一款面向个人和家庭共同使用的本地优先记账 PWA。应用会先把账单和待同步操作写入浏览器 IndexedDB，保证弱网或离线时仍可记账；联网后再通过 Cloudflare Workers 将增量变更幂等同步到 D1，图片附件保存到 R2。
 
 本仓库提供可独立部署的源码，不包含线上账本、账号、附件或生产密钥。每个部署实例使用自己的 Cloudflare 资源。
 
@@ -158,8 +162,8 @@ pnpm run cf:types:check
 
 ```bash
 pnpm exec wrangler login
-pnpm exec wrangler d1 create qingjizhang-db
-pnpm exec wrangler r2 bucket create qingjizhang-attachments
+pnpm exec wrangler d1 create yuvo-db
+pnpm exec wrangler r2 bucket create yuvo-attachments
 ```
 
 将 `wrangler.example.jsonc` 复制为 `wrangler.jsonc`，在本地配置中填写创建结果：

@@ -77,8 +77,8 @@ iOS 在消息到达时唤醒 Web App 的 Service Worker；Service Worker 必须�
 ```json
 {
   "id": "/",
-  "name": "轻记账",
-  "short_name": "轻记账",
+  "name": "知余 Yuvo",
+  "short_name": "知余",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -275,7 +275,7 @@ self.addEventListener("push", (event) => {
     const payload = event.data?.json() ?? {};
 
     await self.registration.showNotification(
-      payload.title || "轻记账",
+      payload.title || "知余 Yuvo",
       {
         body: payload.body || "账本中有一笔新记录",
         icon: "/icons/icon-192.png",

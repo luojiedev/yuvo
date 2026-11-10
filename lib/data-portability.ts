@@ -200,7 +200,7 @@ export interface CsvTransactionRow {
 
 export function parseTransactionsCsv(text: string): CsvTransactionRow[] {
   const rows = parseCsv(text.replace(/^\uFEFF/u, ""));
-  if (rows.length < 2 || csvHeaders.some((header, index) => rows[0][index] !== header)) throw new Error("CSV 表头与轻记账格式不一致");
+  if (rows.length < 2 || csvHeaders.some((header, index) => rows[0][index] !== header)) throw new Error("CSV 表头与知余格式不一致");
   return rows.slice(1).filter((row) => row.some(Boolean)).map((row, index) => {
     const amountMinor = decimalToMinor(row[3]);
     const baseAmountMinor = decimalToMinor(row[6]);

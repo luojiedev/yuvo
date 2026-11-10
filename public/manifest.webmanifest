@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "轻记账",
-  "short_name": "轻记账",
-  "description": "本地优先、支持家庭共享和离线自动同步的轻量记账应用。",
+  "name": "知余 Yuvo",
+  "short_name": "知余",
+  "description": "记下日常，心中有余。知余 Yuvo 是本地优先、支持家庭共享和离线自动同步的记账应用。",
   "lang": "zh-CN",
   "start_url": "/",
   "scope": "/",

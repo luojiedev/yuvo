@@ -19,7 +19,7 @@ test("server renders the bookkeeping launch screen", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>轻记账<\/title>/);
+  assert.match(html, /<title>知余 Yuvo<\/title>/);
   assert.match(html, /manifest\.webmanifest/);
   assert.match(html, /apple-touch-icon\.png/);
   assert.match(html, /apple-touch-startup-image/);
@@ -27,7 +27,7 @@ test("server renders the bookkeeping launch screen", async () => {
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /theme-color[^>]+#f4f1eb/);
   assert.match(html, /theme-color[^>]+#101512/);
-  assert.match(html, /轻记账正在启动/);
+  assert.match(html, /知余正在启动/);
   assert.match(html, /正在打开本地账本/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });

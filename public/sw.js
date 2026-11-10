@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "qingji-pwa";
-const CACHE_VERSION = "v5";
+const CACHE_VERSION = "v6";
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}-runtime-${CACHE_VERSION}`;
 const APP_SHELL_URL = "/";
@@ -75,7 +75,7 @@ self.addEventListener("push", (event) => {
     } catch (error) {
       console.error("[service-worker] push payload could not be parsed", error);
     }
-    const title = typeof payload.title === "string" && payload.title ? payload.title : "轻记账";
+    const title = typeof payload.title === "string" && payload.title ? payload.title : "知余 Yuvo";
     const body = typeof payload.body === "string" ? payload.body : "账本中有一笔新记录";
     const url = typeof payload.url === "string" ? payload.url : "/";
     const tag = typeof payload.tag === "string" ? payload.tag : undefined;
