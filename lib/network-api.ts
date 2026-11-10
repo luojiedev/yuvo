@@ -1,5 +1,6 @@
 import type { NetworkSession, TransactionImageAttachment } from "./domain";
 import { createId } from "./domain";
+import { isDemoMode } from "./app-mode";
 
 const API_PREFIX = "/api/v1";
 const DEVICE_ID_STORAGE_KEY_PREFIX = "swift-ledger.device-id";
@@ -282,6 +283,10 @@ export async function apiRequest(
 }
 
 async function rawApiRequest(path: string, init: RequestInit, token?: string): Promise<Response> {
+  if (isDemoMode) {
+    console.debug("[network] cloud request skipped in local-only demo", { path });
+    throw new NetworkApiError(0, "DEMO_LOCAL_ONLY", "在线体验仅使用本机数据；云同步和自动汇率请自行部署后使用。");
+  }
   const headers = new Headers(init.headers);
   if (token) headers.set("authorization", `Bearer ${token}`);
   let response: Response;

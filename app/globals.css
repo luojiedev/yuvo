@@ -621,6 +621,8 @@ button { color: inherit; cursor: pointer; }
 .local-data-notice { display: grid; gap: 5px; padding: 12px 13px; border-radius: 12px; color: var(--accent-dark); background: var(--accent-soft); font-style: normal; }
 .local-data-notice strong { font-size: 13px; }
 .local-data-notice span { font-size: 12px; line-height: 1.55; }
+.demo-notice { margin-bottom: 18px; }
+.demo-notice a { width: fit-content; padding: 7px 0; color: inherit; font-size: 13px; text-underline-offset: 3px; }
 .network-account-form p { margin: 0 0 2px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .network-account-form input { width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid var(--line); border-radius: 12px; outline: 0; color: var(--ink); background: var(--page); font-size: 16px; }
 .network-account-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }

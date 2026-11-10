@@ -4,9 +4,21 @@
 
 **记下日常，心中有余。**
 
+[中文](README.md) · [English](README.en.md) · [在线体验](https://luojiedev.github.io/yuvo/) · [数据与隐私](docs/privacy.md)
+
+[![CI and demo](https://github.com/luojiedev/yuvo/actions/workflows/ci.yml/badge.svg)](https://github.com/luojiedev/yuvo/actions/workflows/ci.yml)
+
 知余 Yuvo 是一款面向个人和家庭共同使用的本地优先记账 PWA。应用会先把账单和待同步操作写入浏览器 IndexedDB，保证弱网或离线时仍可记账；联网后再通过 Cloudflare Workers 将增量变更幂等同步到 D1，图片附件保存到 R2。
 
 本仓库提供可独立部署的源码，不包含线上账本、账号、附件或生产密钥。每个部署实例使用自己的 Cloudflare 资源。
+
+## 在线体验
+
+打开 **[知余 Yuvo 在线体验](https://luojiedev.github.io/yuvo/)** 即可使用本机记账、流水查询、统计、预算、订阅以及导入导出，无需注册。
+
+体验站由 GitHub Pages 托管，使用独立的浏览器数据库，账本和图片不会上传。它不提供账号、家庭共享、云同步、自动汇率、系统通知或 PWA 离线安装；这些能力需要按下文部署完整版本。体验页面仍为中文。
+
+体验数据没有云端备份，清理浏览器数据或更换设备前请先导出 JSON。详细边界见[数据与隐私说明](docs/privacy.md)。
 
 ## 当前特性
 
@@ -109,6 +121,14 @@ Service Worker → 缓存应用外壳和静态资源
 
 微信内置浏览器不在兼容范围，请使用系统 Safari、Chrome 或安装后的 PWA。
 
+## 数据与隐私
+
+- 未登录账本保存在当前浏览器；登录并接入账号后，相关账本、设置和图片同步到部署者自己的 D1 与 R2。
+- 本地账号隔离不等于加密；完整版本使用 HTTPS 传输，没有端到端加密，部署者能够管理其云端数据。
+- 退出账号会保留本地缓存和待同步操作。清理站点数据会删除本机内容，未同步数据需要提前备份。
+- JSON/CSV 导出文件未加密，包含账单等私人内容；请保存在可信位置。
+- 数据位置、共享范围、通知、汇率服务、日志、删除及恢复边界见[完整说明](docs/privacy.md)（[English](docs/privacy.en.md)）。
+
 ## 环境要求
 
 - Node.js 22.13 或更高版本
@@ -155,6 +175,21 @@ pnpm run cf:types:check
 - `pnpm run typecheck`：执行 TypeScript 类型检查。
 - `pnpm run lint`：执行代码规范检查。
 - `pnpm run cf:types:check`：检查 Worker 绑定类型是否与配置一致。
+
+## CI 与体验站发布
+
+[GitHub Actions 工作流](.github/workflows/ci.yml)在提交到 `main`、创建或更新 PR，以及手动触发时运行：
+
+1. 使用 Node.js 22 和 `package.json` 中固定的 pnpm 版本，通过 `--frozen-lockfile` 安装依赖。
+2. 执行 Worker 类型检查、TypeScript、Lint、生产构建、前端测试、本地数据库测试和 Worker/D1/R2 集成测试。
+3. 使用 `pnpm run demo:build --base /yuvo/` 构建独立的纯前端体验站。
+4. 仅在 `main` 的全部检查通过后发布 GitHub Pages；成功的部署任务中会显示可打开的体验地址。PR 运行检查和体验构建，不覆盖公开体验站。
+
+首次在自己的 GitHub 仓库使用时，在 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**，然后推送到 `main` 或手动运行工作流。工作流按仓库名称设置资源路径；Fork 后的默认体验地址为 `https://<owner>.github.io/<repo>/`，README 中的固定链接需要自行更新。
+
+如果账号主页配置了自定义域名，项目站会继承该域名，请以 Pages 的实际部署链接为准。参见 [GitHub Pages 域名说明](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages)。
+
+体验构建输出到 `dist-demo/`，不会读取本地部署配置或根目录的 `.env*`，不需要 Cloudflare Token、D1/R2 资源或额外部署 Secret。完整后端部署仍按下文操作。
 
 ## Cloudflare 部署
 
@@ -223,5 +258,12 @@ pnpm run cf:deploy
 - `tests/`：前端领域逻辑、渲染和本地数据库测试。
 - `worker-tests/`：Worker、D1 和 R2 集成测试。
 - `AGENTS.md`：本项目的本地 Agent 实施检查点。
+- `demo/` 与 `vite.demo.config.ts`：独立的纯前端体验入口与构建配置。
+- `.github/workflows/ci.yml`：自动检查及 GitHub Pages 体验站发布。
+- `docs/privacy.md` 与 `docs/privacy.en.md`：中英文数据与隐私说明。
 - `DEVELOPMENT_PLAN.md`：当前能力、剩余工作和里程碑。
 - `IMPLEMENTATION_PLAN.md`：更细粒度的历史实施清单。
+
+## 许可证
+
+本项目采用 [MIT License](LICENSE)。第三方依赖遵循各自的许可证。

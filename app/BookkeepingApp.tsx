@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { isDemoMode } from "../lib/app-mode";
 import type { Account, BookkeepingTransaction, Category, ExchangeRateSource, Ledger, NetworkSession, Subcategory, Subscription, SupportedCurrency, TransactionImageAttachment } from "../lib/domain";
 import { convertToBaseAmountMinor, createId, formatMinorAmount, formatTransactionCategory, groupTransactionsByLocalDay, isTransactionVisibleOnDate, transactionBaseAmountMinor } from "../lib/domain";
 import {
@@ -834,13 +835,13 @@ export function BookkeepingApp() {
     async function initialize() {
       let openedDatabase: IDBDatabase | null = null;
       try {
-        const database = await startupStep("open_local_database", openActiveAccountDatabase);
+        const database = await startupStep("open_local_database", () => isDemoMode ? openBookkeepingDatabase("demo-v1") : openActiveAccountDatabase());
         openedDatabase = database;
         await startupStep("prepare_local_database", () => ensureDefaultData(database));
         const [savedSession, pendingCount, legacy] = await startupStep("read_local_account", () => Promise.all([
-          getNetworkSession(database),
+          isDemoMode ? Promise.resolve(null) : getNetworkSession(database),
           countUnsyncedOperations(database),
-          inspectLegacyData(),
+          isDemoMode ? Promise.resolve({ hasLegacyData: false }) : inspectLegacyData(),
         ]));
         let ledgerRows = await startupStep("read_local_ledgers", () => listLedgers(database));
         if (savedSession && ledgerRows.some((ledger) => ledger.id === defaultBookkeepingIds.ledgerId)) {
@@ -891,14 +892,16 @@ export function BookkeepingApp() {
     }
 
     void initialize();
-    void fetchLaunchMessage().then((message) => {
-      if (isActive) setLaunchMessage(message);
-    }).catch((error) => {
-      console.debug("[bookkeeping] remote launch message unavailable", error);
-    });
-    void getBootstrapStatus().then(setIsNetworkInitialized).catch((error) => {
-      console.debug("[network] bootstrap status unavailable", error);
-    });
+    if (!isDemoMode) {
+      void fetchLaunchMessage().then((message) => {
+        if (isActive) setLaunchMessage(message);
+      }).catch((error) => {
+        console.debug("[bookkeeping] remote launch message unavailable", error);
+      });
+      void getBootstrapStatus().then(setIsNetworkInitialized).catch((error) => {
+        console.debug("[network] bootstrap status unavailable", error);
+      });
+    }
     return () => {
       isActive = false;
       viewContext.invalidate();
@@ -929,7 +932,7 @@ export function BookkeepingApp() {
   }
 
   const checkLegacyMigration = useCallback(async () => {
-    if (isLoading || legacyMigrationRunningRef.current || isAccountSubmitting) return;
+    if (isDemoMode || isLoading || legacyMigrationRunningRef.current || isAccountSubmitting) return;
     if (syncRunningRef.current || recoveryOpenRef.current) {
       queueMicrotask(() => setLegacyNotice("正在同步或处理冲突，请稍后重新检查旧数据；原始副本仍保留。"));
       return;
@@ -1108,8 +1111,8 @@ export function BookkeepingApp() {
     window.addEventListener("appinstalled", handleInstalled);
     navigator.serviceWorker?.addEventListener("controllerchange", handleControllerChange);
 
-    if (process.env.NODE_ENV !== "production") {
-      console.debug("[pwa] service worker registration skipped in development");
+    if (isDemoMode || process.env.NODE_ENV !== "production") {
+      console.debug("[pwa] service worker registration skipped", { demo: isDemoMode });
     } else if (!("serviceWorker" in navigator)) {
       queueMicrotask(() => setPwaStatus("unsupported"));
       console.error("[pwa] service worker is unavailable in this browser context");
@@ -1273,7 +1276,7 @@ export function BookkeepingApp() {
   const canManageLedgerSettings = activeLedger?.role === "owner" || activeLedger?.role === "admin" || !networkSession;
   const canMutateTransactions = activeLedger?.role !== "viewer" || !networkSession;
   const activeLedgerName = activeLedger?.name ?? "日常账本";
-  const offlineStatusLabel = !isOnline
+  const offlineStatusLabel = isDemoMode ? "本机体验" : !isOnline
     ? "当前离线"
     : pwaStatus === "ready"
       ? "离线可用"
@@ -1406,6 +1409,11 @@ export function BookkeepingApp() {
     if (currency === "CNY") {
       setExchangeRateDraft("1.00");
       setExchangeRateSource("fixed");
+      setExchangeRateAt(new Date().toISOString());
+      return;
+    }
+    if (isDemoMode) {
+      setExchangeRateSource("manual");
       setExchangeRateAt(new Date().toISOString());
       return;
     }
@@ -2730,6 +2738,11 @@ export function BookkeepingApp() {
       setSubscriptionRateAt(new Date().toISOString());
       return;
     }
+    if (isDemoMode) {
+      setSubscriptionRateSource("manual");
+      setSubscriptionRateAt(new Date().toISOString());
+      return;
+    }
     try {
       const quote = await fetchUsdCnyExchangeRate();
       setSubscriptionRateDraft((quote.rateMicros / 1_000_000).toFixed(4));
@@ -3008,7 +3021,7 @@ export function BookkeepingApp() {
       <section className="page-panel">
         <div className="page-title"><p>个人中心</p><h1>我的</h1></div>
         <div className="profile-hero">
-          <div className="profile-identity"><span className="profile-avatar">{networkSession?.displayName.slice(0, 1) || "我"}</span><div><strong>{networkSession?.displayName ?? "本机用户"}</strong><small>{networkSession ? `@${networkSession.username}` : "本地可用 · 登录后跨设备同步"}</small>{networkSession ? <small className={`profile-sync-state ${!isOnline ? "offline" : syncStatus}`} title={lastSyncLabel}><i aria-hidden="true" />{networkStatusLabel}</small> : null}</div></div>
+          <div className="profile-identity"><span className="profile-avatar">{networkSession?.displayName.slice(0, 1) || "我"}</span><div><strong>{networkSession?.displayName ?? "本机用户"}</strong><small>{networkSession ? `@${networkSession.username}` : isDemoMode ? "在线体验 · 数据仅保存在当前浏览器" : "本地可用 · 登录后跨设备同步"}</small>{networkSession ? <small className={`profile-sync-state ${!isOnline ? "offline" : syncStatus}`} title={lastSyncLabel}><i aria-hidden="true" />{networkStatusLabel}</small> : null}</div></div>
           {networkSession ? <div className="profile-actions"><button className="profile-edit-button" type="button" onClick={() => { if (!isProfileEditing) setProfileDisplayNameDraft(networkSession.displayName); setIsProfileEditing((current) => !current); }}>{isProfileEditing ? "取消" : "修改名称"}</button><button className="profile-sync-button" type="button" disabled={!isOnline || syncStatus === "syncing"} onClick={() => void syncActiveLedger()}>{!isOnline ? "当前离线" : syncStatus === "syncing" ? "同步中" : syncStatus === "error" ? "重试同步" : "立即同步"}</button></div> : null}
           {networkSession && isProfileEditing ? (
             <form className="profile-name-form" onSubmit={handleProfileDisplayNameSave}>
@@ -3017,8 +3030,8 @@ export function BookkeepingApp() {
             </form>
           ) : null}
         </div>
-        {!networkSession ? <h2 className="settings-group-title">网络账号</h2> : null}
-        {networkSession ? (
+        {!isDemoMode && !networkSession ? <h2 className="settings-group-title">网络账号</h2> : null}
+        {isDemoMode ? <aside className="local-data-notice"><strong>云端功能需自行部署</strong><span>在线体验支持本机记账、统计、预算和导入导出。登录、家庭共享、云同步、自动汇率、消息通知和 PWA 离线安装需部署完整版本后使用。</span></aside> : networkSession ? (
           <>
             <h2 className="settings-group-title">家庭与账号</h2>
             <div className="settings-list account-action-list">
@@ -3055,15 +3068,15 @@ export function BookkeepingApp() {
           <button type="button" onClick={() => void openDataPortability()}><span><i>备</i><span className="settings-row-copy"><strong>导入与导出</strong><small>当前账本 JSON 备份与流水 CSV</small></span></span><b>›</b></button>
           <div><span><i>隐</i>隐私与本地存储</span><b>{networkSession ? "本地 + 云端" : "仅本机"}</b></div>
         </div>
-        <h2 className="settings-group-title">离线应用</h2>
+        <h2 className="settings-group-title">{isDemoMode ? "应用" : "离线应用"}</h2>
         <div className="settings-list">
-          <button type="button" onClick={() => void requestAppInstallation()} disabled={isInstalled}><span><i>装</i>添加到主屏幕</span><b>{installationLabel}{isInstalled ? "" : " ›"}</b></button>
-          <div><span><i>离</i>离线状态</span><b>{offlineStatusLabel}</b></div>
+          {!isDemoMode ? <button type="button" onClick={() => void requestAppInstallation()} disabled={isInstalled}><span><i>装</i>添加到主屏幕</span><b>{installationLabel}{isInstalled ? "" : " ›"}</b></button> : null}
+          {!isDemoMode ? <div><span><i>离</i>离线状态</span><b>{offlineStatusLabel}</b></div> : null}
           {waitingServiceWorker ? <button type="button" onClick={applyApplicationUpdate}><span><i>更</i>应用更新</span><b>立即更新 ›</b></button> : null}
           <button type="button" onClick={restartApplication}><span><i>启</i><span className="settings-row-copy"><strong>重新启动应用</strong><small>不会清除账本或登录状态</small></span></span><b>›</b></button>
         </div>
-        <p className="pwa-note">所有记账先写入本机；断网时可以继续保存，恢复网络或再次打开应用后自动幂等同步。</p>
-        <p className="storage-note">尚未同步的账目只存在当前设备，请在清理浏览器数据前确认待同步数量为 0。</p>
+        <p className="pwa-note">{isDemoMode ? "体验站没有云端备份，清理浏览器数据或更换设备前请导出 JSON。" : "所有记账先写入本机；断网时可以继续保存，恢复网络或再次打开应用后自动幂等同步。"}</p>
+        {!isDemoMode ? <p className="storage-note">尚未同步的账目只存在当前设备，请在清理浏览器数据前确认待同步数量为 0。</p> : null}
       </section>
     );
   }
@@ -3074,6 +3087,7 @@ export function BookkeepingApp() {
 
   return (
     <main className="app-shell">
+      {isDemoMode ? <aside className="local-data-notice demo-notice" aria-label="在线体验数据说明"><strong>知余 Yuvo · 在线体验</strong><span>数据仅保存在当前浏览器，不会上传。清理浏览器数据前请导出备份。</span><a href="https://github.com/luojiedev/yuvo/blob/main/docs/privacy.md" target="_blank" rel="noreferrer">数据与隐私说明 ↗</a></aside> : null}
       {activeTab !== "profile" ? (
         <header className="topbar">
           <button className="ledger-current" type="button" aria-label={`切换账本，当前${activeLedgerName}`} onClick={openLedgerPicker}>
@@ -3287,7 +3301,7 @@ export function BookkeepingApp() {
                 <button type="button" className="account-row" onClick={() => openAccountManager(selectedAccount)}><span>{entryType === "expense" ? "支出账户" : "收入账户"}</span><strong>{selectedAccount?.name ?? "请选择"} ›</strong></button>
                 {renderSubcategoryControls("select")}
                 <section className="note-section" aria-labelledby="note-heading">
-                  <div className="note-heading"><strong id="note-heading">描述与图片</strong><span>{networkSession ? "自动安全同步" : "登录后同步"}</span></div>
+                  <div className="note-heading"><strong id="note-heading">描述与图片</strong><span>{isDemoMode ? "图片仅保存在本机" : networkSession ? "自动安全同步" : "登录后同步"}</span></div>
                   <input ref={imageInputRef} className="visually-hidden-input" type="file" accept="image/*" multiple onChange={(event) => handleImageSelection(event.target.files)} />
                   <div className="note-composer">
                     <textarea value={note} maxLength={150} rows={3} placeholder="描述这笔账单…" onChange={(event) => setNote(event.target.value)} />
